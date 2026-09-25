@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { margin: 0; padding: 14px; background: #f8fafc; color: #1e293b; font-size: 13px; }
+    
+    .brand-header {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-logo {
+      background: #e11d48;
+      color: white;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+    .brand-info h3 { margin: 0; font-size: 14px; font-weight: 700; }
+    .brand-info p { margin: 2px 0 0 0; font-size: 11px; color: #94a3b8; }
+
+    .input-box-wrap {
+      background: white;
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 10px;
+      transition: 0.2s;
+      position: relative;
+    }
+    .input-box-wrap.drag-over {
+      border-color: #e11d48;
+      background: #fff1f2;
+    }
+
+    textarea {
+      width: 100%;
+      height: 100px;
+      border: none;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      background: transparent;
+    }
+
+    .paste-hint {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 8px;
+      margin-top: 4px;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .btn-attach {
+      background: none;
+      border: none;
+      color: #0284c7;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-attach:hover { background: #e0f2fe; }
+
+    /* Khung hiển thị ảnh đã dán */
+    .image-preview-card {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 10px;
+    }
+    .preview-thumb {
+      width: 55px;
+      height: 55px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+    }
+    .image-meta {
+      flex: 1;
+      font-size: 11px;
+    }
+    .image-meta b { color: #0f172a; display: block; margin-bottom: 2px; }
+    .btn-remove-img {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .btn-remove-img:hover { background: #fecaca; }
+
+    .quick-examples {
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+    .example-tag {
+      display: inline-block;
+      font-size: 11px;
+      background: #e2e8f0;
+      padding: 4px 8px;
+      border-radius: 12px;
+      cursor: pointer;
+      color: #334155;
+      margin-top: 4px;
+    }
+    .example-tag:hover { background: #cbd5e1; }
+
+    .btn-create {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: #e11d48;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.3);
+      transition: 0.2s;
+      margin-top: 10px;
+    }
+    .btn-create:hover { background: #be123c; }
+    .btn-create:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
+
+    .status-card {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .status-loading {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-success {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #15803d;
+      display: block;
+    }
+    .status-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      display: block;
+    }
+
+    .open-file-btn {
+      display: block;
+      margin-top: 10px;
+      padding: 10px;
+      background: #16a34a;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .open-file-btn:hover { background: #15803d; }
+
+    .preview-summary {
+      margin-top: 8px;
+      font-size: 12px;
+      background: white;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="brand-header">
+    <div class="brand-logo">AB</div>
+    <div class="brand-info">
+      <h3>AB Films - Tạo Báo Giá AI</h3>
+      <p>Hỗ trợ chụp màn hình Ctrl + V ⚡ Nhân bản tự động</p>
+    </div>
+  </div>
+
+  <!-- KHUNG NHẬP LIỆU THÔNG MINH (VỪA NHẬN CHAT, VỪA NHẬN ẢNH CTRL+V) -->
+  <div class="input-box-wrap" id="dropZone">
+    <textarea id="quoteText" placeholder="Gõ/dán tin nhắn Zalo vào đây...
+Hoặc chụp ảnh màn hình rồi ấn Ctrl + V để dán ảnh thẳng vào đây!"></textarea>
+
+    <!-- Thẻ hiển thị ảnh sau khi đã Ctrl+V hoặc chọn file -->
+    <div id="imagePreviewCard" class="image-preview-card">
+      <img id="previewImg" class="preview-thumb" src="" alt="Thumbnail">
+      <div class="image-meta">
+        <b><i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> Đã dán ảnh chụp màn hình</b>
+        <span id="imgInfoText" style="color:#64748b;">Sẵn sàng bóc tách</span>
+      </div>
+      <button class="btn-remove-img" onclick="removeImage()"><i class="fa-solid fa-xmark"></i> Xóa ảnh</button>
+    </div>
+
+    <div class="paste-hint">
+      <span><i class="fa-solid fa-keyboard"></i> Nhấn <b>Ctrl + V</b> để dán ảnh chụp màn hình</span>
+      <button class="btn-attach" onclick="document.getElementById('fileUpload').click()">
+        <i class="fa-solid fa-paperclip"></i> Chọn tệp ảnh
+      </button>
+      <input type="file" id="fileUpload" accept="image/*" style="display:none;" onchange="onFileSelected(event)">
+    </div>
+  </div>
+
+  <div class="quick-examples">
+    <span style="font-size:11px; color:#64748b;">Mẫu thử nhanh:</span><br>
+    <span class="example-tag" onclick="pasteSample(1)">Anh Nam (25m2, 4 mã, không CK)</span>
+    <span class="example-tag" onclick="pasteSample(2)">Anh Nam (25m2, 2 mã, CK 10%)</span>
+  </div>
+
+  <!-- NÚT BẤM DUY NHẤT -->
+  <button id="btnSubmit" class="btn-create" onclick="startProcess()">
+    <i class="fa-solid fa-wand-magic-sparkles"></i> TỰ ĐỘNG NHÂN BẢN & TẠO FILE MỚI
+  </button>
+
+  <!-- THÔNG BÁO TRẠNG THÁI -->
+  <div id="statusBox" class="status-card"></div>
+
+  <script>
+    var currentBase64 = null;
+    var currentMime = "image/png";
+
+    // BẮT SỰ KIỆN CTRL + V ĐỂ DÁN ẢNH CHỤP MÀN HÌNH TỰ ĐỘNG
+    window.addEventListener('paste', function(e) {
+      var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      if (!items) return;
+
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          var blob = items[i].getAsFile();
+          if (blob) {
+            handleImageBlob(blob);
+          }
+          break;
+        }
+      }
+    });
+
+    // Kéo thả ảnh vào khung
+    var dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', function() {
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        var file = e.dataTransfer.files[0];
+        if (file.type.indexOf('image') !== -1) {
+          handleImageBlob(file);
+        }
+      }
+    });
+
+    function onFileSelected(e) {
+      var f = e.target.files[0];
+      if (f) handleImageBlob(f);
+    }
+
+    function handleImageBlob(blob) {
+      currentMime = blob.type || "image/png";
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        var fullData = evt.target.result;
+        currentBase64 = fullData.split(',')[1];
+        
+        // Hiển thị ảnh xem trước
+        document.getElementById('previewImg').src = fullData;
+        document.getElementById('imagePreviewCard').style.display = "flex";
+        document.getElementById('imgInfoText').innerText = "Kích thước: " + Math.round(blob.size / 1024) + " KB";
+      };
+      reader.readAsDataURL(blob);
+    }
+
+    function removeImage() {
+      currentBase64 = null;
+      document.getElementById('imagePreviewCard').style.display = "none";
+      document.getElementById('previewImg').src = "";
+      document.getElementById('fileUpload').value = "";
+    }
+
+    function pasteSample(type) {
+      var txt = document.getElementById('quoteText');
+      if (type === 1) {
+        txt.value = "Báo giá cho anh Nam - Địa chỉ: 62 Vũ Trọng Khánh, Mộ Lao, Hà Đông. Diện tích 25m2 các mã: Film PPF giá 1.100.000, Silikante Pro giá 1.400.000, Silikante Luxury giá 1.800.000, Silihome giá 2.400.000.";
+      } else {
+        txt.value = "Báo giá cho anh Nam, 62 Vũ Trọng Khánh, Hà Đông, diện tích 25m2 các mã PPF 1.1tr, Silikante Pro 1.4tr, chiết khấu 10%";
+      }
+    }
+
+    function setStatus(html, type) {
+      var box = document.getElementById('statusBox');
+      box.className = "status-card status-" + type;
+      box.innerHTML = html;
+      box.style.display = "block";
+    }
+
+    function startProcess() {
+      var text = document.getElementById('quoteText').value.trim();
+
+      if (!text && !currentBase64) {
+        alert("Vui lòng gõ tin nhắn hoặc chụp ảnh màn hình rồi bấm Ctrl + V!");
+        return;
+      }
+
+      var payload = {
+        text: text,
+        image: currentBase64,
+        mimeType: currentMime
+      };
+
+      var btn = document.getElementById('btnSubmit');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG NHÂN BẢN & ĐIỀN BÁO GIÁ...';
+
+      setStatus('<i class="fa-solid fa-spinner fa-spin"></i> Gemini 3.5 đang đọc dữ liệu ➔ Tự nhân bản file mới ➔ Căn chỉnh bảng...', 'loading');
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> TỰ ĐỘNG NHÂN BẢN & TẠO FILE MỚI';
+
+          if (!res.success) {
+            setStatus("<b>Đã có lỗi xảy ra:</b> " + res.error, "error");
+            return;
+          }
+
+          var ext = res.extracted;
+          var html = '<b>✓ ĐÃ NHÂN BẢN THÀNH CÔNG!</b><br>';
+          html += '📁 <b>Tên file:</b> ' + res.newDocTitle + '<br>';
+          html += '<div class="preview-summary">';
+          html += '👤 <b>Khách hàng:</b> ' + ext.customerName + '<br>';
+          if (ext.address) html += '📍 <b>Địa chỉ:</b> ' + ext.address + '<br>';
+          html += '🏷️ <b>Số mã film:</b> ' + ext.items.length + ' mã ' + (ext.hasDiscount ? '<i>(Có chiết khấu ' + ext.discountPercent + '%)</i>' : '<i>(Không chiết khấu)</i>') + '<br>';
+          html += '</div>';
+          html += '<a href="' + res.newDocUrl + '" target="_blank" class="open-file-btn">👉 BẤM ĐÂY ĐỂ MỞ FILE MỚI ĐỂ CHỈNH</a>';
+
+          setStatus(html, "success");
+
+          // Tự động mở tab mới ngay lập tức
+          window.open(res.newDocUrl, '_blank');
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> TỰ ĐỘNG NHÂN BẢN & TẠO FILE MỚI';
+          setStatus("<b>Lỗi hệ thống:</b> " + err, "error");
+        })
+        .processAndDuplicateDoc(payload);
+    }
+  </script>
+</body>
+</html>
