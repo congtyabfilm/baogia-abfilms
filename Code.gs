@@ -1,6 +1,7 @@
 // ==========================================
 // AB FILMS - TỰ ĐỘNG TẠO BÁO GIÁ PHIM BẢO VỆ
 // ==========================================
+// THAY API KEY MỚI CỦA BẠN VÀO DÒNG DƯỚI ĐÂY:
 var GEMINI_API_KEY = "AQ.Ab8RN6J2NP3SlHIYtmTF2VwGbNmmnbFIEIGthP1BO_vELB9vag";
 
 function onOpen() {
@@ -18,10 +19,10 @@ function showSidebar() {
 }
 
 /**
- * Gọi AI Gemini với cơ chế tự động thử lại và đổi model dự phòng khi máy chủ Google quá tải (503)
+ * Chỉ sử dụng duy nhất 2 model: gemini-3.5-flash-lite và gemini-3.1-flash-lite
  */
 function callGeminiSmart(parts) {
-  var models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
+  var models = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
   var lastError = "";
 
   for (var m = 0; m < models.length; m++) {
@@ -51,7 +52,7 @@ function callGeminiSmart(parts) {
           return JSON.parse(raw);
         } else if (resCode === 503 || resCode === 429) {
           Utilities.sleep(1500);
-          lastError = "Lỗi " + resCode + " (" + modelName + "): " + resText;
+          lastError = "Lỗi " + resCode + " (" + modelName + "): Máy chủ đang bận, đang thử lại...";
         } else {
           lastError = "Lỗi " + resCode + " (" + modelName + "): " + resText;
           break;
@@ -63,7 +64,7 @@ function callGeminiSmart(parts) {
     }
   }
 
-  throw new Error("Không thể kết nối AI (vui lòng thử lại sau vài giây): " + lastError);
+  throw new Error("Không thể kết nối AI: " + lastError);
 }
 
 /**
@@ -74,13 +75,13 @@ function processAndDuplicateDoc(payload) {
     var promptSystem = "Bạn là trợ lý AI chuyên bóc tách thông tin làm báo giá cho Công ty AB Films.\n" +
       "Hãy phân tích tin nhắn hoặc hình ảnh đầu vào và trả về JSON chuẩn xác:\n" +
       "- customerName: Tên khách hàng (ví dụ: 'Anh Nam', 'Chị Quỳnh', 'Chị Hạnh', nếu không có ghi 'Khách hàng')\n" +
-      "- address: Địa chỉ công trình (ví dụ: 'Hà Đông', 'Bắc Ninh', '62 Vũ Trọng Khánh')\n" +
+      "- address: Địa chỉ công trình (ví dụ: 'Hà Đông', 'Bắc Ninh', 'Tây Hồ', '62 Vũ Trọng Khánh')\n" +
       "- hasDiscount: boolean (true nếu có nhắc đến chiết khấu / giảm giá / bớt %, false nếu không)\n" +
-      "- discountPercent: phần trăm chiết khấu (kiểu số nguyên, ví dụ 5 nghĩa là 5%, 10 nghĩa là 10%)\n" +
+      "- discountPercent: phần trăm chiết khấu (kiểu số nguyên, ví dụ 5 nghĩa là 5%, 7 nghĩa là 7%, 10 nghĩa là 10%)\n" +
       "- items: mảng các mã phim:\n" +
       "  + filmCode: Tên mã film (ví dụ: 'PPF', 'Pnc 50', 'Top 70', 'Silikante Pro', 'Silikante Luxury', 'Silihome'...)\n" +
-      "  + area: diện tích m2 (kiểu số, ví dụ 5 hoặc 10 hoặc 25. LƯU Ý: Nếu yêu cầu nêu diện tích chung thì gán cho tất cả các mã)\n" +
-      "  + originalUnitPrice: đơn giá gốc VNĐ/m2 (số nguyên đầy đủ: 900k -> 900000, 520k -> 520000, 700k -> 700000, '1tr4' -> 1400000, '2tr1' -> 2100000)\n" +
+      "  + area: diện tích m2 (kiểu số, ví dụ 51 hoặc 5 hoặc 25. LƯU Ý: Nếu yêu cầu nêu diện tích chung thì gán cho tất cả các mã)\n" +
+      "  + originalUnitPrice: đơn giá gốc VNĐ/m2 (số nguyên đầy đủ: '2.5tr' -> 2500000, 900k -> 900000, 520k -> 520000, 700k -> 700000, '1tr4' -> 1400000, '2tr1' -> 2100000)\n" +
       "Chỉ trả về JSON thuần túy, không kèm giải thích.";
 
     var parts = [{ text: promptSystem }];
@@ -122,7 +123,7 @@ function processAndDuplicateDoc(payload) {
     var newFile = templateFile.makeCopy(newDocTitle, folder);
     var newDoc = DocumentApp.openById(newFile.getId());
 
-    // 4. Áp dụng dữ liệu vào file mới (Font 14, KHÔNG IN ĐẬM nội dung điền)
+    // 4. Áp dụng dữ liệu vào file mới (Font 14, HOÀN TOÀN KHÔNG IN ĐẬM)
     applyDataToDocument(newDoc, data);
 
     return {
@@ -158,7 +159,7 @@ function setCellContent(cell, text, isBold, colWidth) {
   p0.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
   p0.setFontFamily("Times New Roman");
   p0.setFontSize(14);
-  p0.setBold(isBold === true);
+  p0.setBold(isBold === true); // isBold = false -> chữ thường hoàn toàn
   p0.setLineSpacing(1.0);
   p0.setSpacingBefore(0);
   p0.setSpacingAfter(0);
@@ -188,7 +189,7 @@ function applyDataToDocument(doc, data) {
 
     p.setText(fullText);
     p.setFontFamily("Times New Roman").setFontSize(14);
-    p.editAsText().setBold(false); // Chữ thường, không in đậm!
+    p.editAsText().setBold(false); // Chữ thường hoàn toàn
   }
 
   // 2. Dòng ngày tháng cuối trang (Font 14 thường, KHÔNG IN ĐẬM)
@@ -198,10 +199,10 @@ function applyDataToDocument(doc, data) {
     var dateP = dateFound.getElement().getParent().asParagraph();
     dateP.setText(dateStr);
     dateP.setFontFamily("Times New Roman").setFontSize(14).setAlignment(DocumentApp.HorizontalAlignment.RIGHT);
-    dateP.editAsText().setBold(false);
+    dateP.editAsText().setBold(false); // Chữ thường hoàn toàn
   }
 
-  // 3. Tìm và cập nhật Bảng Báo Giá
+  // 3. Tìm và cập nhật Bảng Báo Giá (Toàn bộ Font 14 thường, KHÔNG IN ĐẬM CẢ TIÊU ĐỀ)
   var tables = body.getTables();
   var quoteTable = null;
   for (var i = 0; i < tables.length; i++) {
@@ -247,14 +248,14 @@ function applyDataToDocument(doc, data) {
 
     var newTable = parent.insertTable(tableIndex);
 
-    // Tiêu đề cột (Font 14 Bold)
+    // Tiêu đề cột: ĐÃ ĐỔI THÀNH FALSE -> CHỮ THƯỜNG HOÀN TOÀN, KHÔNG IN ĐẬM
     var headerRow = newTable.appendTableRow();
     for (var h = 0; h < headers.length; h++) {
       var cell = headerRow.appendTableCell();
-      setCellContent(cell, headers[h], true, colWidths[h]);
+      setCellContent(cell, headers[h], false, colWidths[h]);
     }
 
-    // Các dòng mã phim (Font 14 thường, KHÔNG IN ĐẬM)
+    // Các dòng mã phim: CHỮ THƯỜNG HOÀN TOÀN, KHÔNG IN ĐẬM
     var items = data.items || [];
     for (var r = 0; r < items.length; r++) {
       var item = items[r];
@@ -289,7 +290,6 @@ function applyDataToDocument(doc, data) {
 
       for (var c = 0; c < rowValues.length; c++) {
         var cCell = row.appendTableCell();
-        // false: KHÔNG IN ĐẬM NỘI DUNG ĐIỀN
         setCellContent(cCell, rowValues[c], false, colWidths[c]);
       }
     }
